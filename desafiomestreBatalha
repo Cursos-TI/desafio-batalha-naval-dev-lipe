@@ -1,0 +1,218 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+#define TAM 10
+#define AGUA 0
+#define NAVIO 3
+#define HABILIDADE 5
+#define TAM_NAVIO 3
+
+// Tamanho fixo das matrizes de habilidade (exemplo 5x5)
+#define H_LIN 5
+#define H_COL 5
+
+// Prototipos
+void inicializa_habilidade_cone(int matriz[H_LIN][H_COL]);
+void inicializa_habilidade_cruz(int matriz[H_LIN][H_COL]);
+void inicializa_habilidade_octaedro(int matriz[H_LIN][H_COL]);
+void exibir_tabuleiro(int tabuleiro[TAM][TAM]);
+void exibir_matriz_habilidade(int matriz[H_LIN][H_COL]);
+void sobrepor_habilidade(int tabuleiro[TAM][TAM], int matriz[H_LIN][H_COL], int origem_linha, int origem_coluna);
+int pode_posicionar(int tabuleiro[TAM][TAM], int linha, int coluna, int dx, int dy);
+void posiciona_navio(int tabuleiro[TAM][TAM], int linha, int coluna, int dx, int dy);
+
+int main() {
+    int tabuleiro[TAM][TAM] = {0};
+
+    printf("=== Posicionamento de Quatro Navios ===\n");
+
+    // Posiciona navios
+    if (pode_posicionar(tabuleiro, 0, 0, 0, 1))
+        posiciona_navio(tabuleiro, 0, 0, 0, 1); // Horizontal no topo (linha 1, col A-C)
+
+    if (pode_posicionar(tabuleiro, 2, 2, 1, 0))
+        posiciona_navio(tabuleiro, 2, 2, 1, 0); // Vertical (col C, linhas 3-5)
+
+    if (pode_posicionar(tabuleiro, 4, 4, 1, 1))
+        posiciona_navio(tabuleiro, 4, 4, 1, 1); // Diagonal principal (↘)
+
+    if (pode_posicionar(tabuleiro, 5, 7, 1, -1))
+        posiciona_navio(tabuleiro, 5, 7, 1, -1); // Diagonal secundária (↙)
+
+    exibir_tabuleiro(tabuleiro);
+
+    // Criar matrizes para habilidades
+    int cone[H_LIN][H_COL] = {0};
+    int cruz[H_LIN][H_COL] = {0};
+    int octaedro[H_LIN][H_COL] = {0};
+
+    // Inicializa matrizes dinamicamente com loops e condicionais
+    inicializa_habilidade_cone(cone);
+    inicializa_habilidade_cruz(cruz);
+    inicializa_habilidade_octaedro(octaedro);
+
+    // Exibir matrizes criadas
+    printf("\nHabilidade Cone (matriz %dx%d):\n", H_LIN, H_COL);
+    exibir_matriz_habilidade(cone);
+
+    printf("Habilidade Cruz (matriz %dx%d):\n", H_LIN, H_COL);
+    exibir_matriz_habilidade(cruz);
+
+    printf("Habilidade Octaedro (matriz %dx%d):\n", H_LIN, H_COL);
+    exibir_matriz_habilidade(octaedro);
+
+    // Ponto de origem no tabuleiro para aplicar cada habilidade
+    int origem_cone_l = 2, origem_cone_c = 2;     // Exemplo: linha 3, coluna C
+    int origem_cruz_l = 5, origem_cruz_c = 5;     // Linha 6, coluna F
+    int origem_octaedro_l = 7, origem_octaedro_c = 7; // Linha 8, coluna H
+
+    // Sobrepõe as áreas das habilidades no tabuleiro
+    sobrepor_habilidade(tabuleiro, cone, origem_cone_l, origem_cone_c);
+    sobrepor_habilidade(tabuleiro, cruz, origem_cruz_l, origem_cruz_c);
+    sobrepor_habilidade(tabuleiro, octaedro, origem_octaedro_l, origem_octaedro_c);
+
+    // Exibe tabuleiro com áreas de habilidade marcadas com 5
+    printf("\nTabuleiro com Navios (3) e Áreas de Habilidade (5):\n");
+    exibir_tabuleiro(tabuleiro);
+
+    return 0;
+}
+
+// Função para inicializar matriz de habilidade Cone (forma de cone apontando para baixo)
+void inicializa_habilidade_cone(int matriz[H_LIN][H_COL]) {
+    // Limpa matriz
+    for(int i=0; i<H_LIN; i++) {
+        for(int j=0; j<H_COL; j++) {
+            matriz[i][j] = 0;
+        }
+    }
+
+    // Usando estrutura aninhada e condicionais para formar cone
+    int centro = H_COL / 2;
+    for(int i=0; i<H_LIN; i++) {
+        for(int j=0; j<H_COL; j++) {
+            // Se o elemento estiver dentro da largura que aumenta com a linha i
+            if (j >= centro - i && j <= centro + i) {
+                matriz[i][j] = 1;
+            }
+        }
+    }
+}
+
+// Função para inicializar matriz de habilidade Cruz
+void inicializa_habilidade_cruz(int matriz[H_LIN][H_COL]) {
+    for(int i=0; i<H_LIN; i++) {
+        for(int j=0; j<H_COL; j++) {
+            matriz[i][j] = 0;
+        }
+    }
+    int centro = H_COL / 2;
+    int meio = H_LIN / 2;
+    for(int i=0; i<H_LIN; i++) {
+        for(int j=0; j<H_COL; j++) {
+            // A cruz: linha do meio toda 1 + coluna do meio toda 1
+            if (i == meio || j == centro) {
+                matriz[i][j] = 1;
+            }
+        }
+    }
+}
+
+// Função para inicializar matriz de habilidade Octaedro (losango)
+void inicializa_habilidade_octaedro(int matriz[H_LIN][H_COL]) {
+    for(int i=0; i<H_LIN; i++) {
+        for(int j=0; j<H_COL; j++) {
+            matriz[i][j] = 0;
+        }
+    }
+    int centro = H_COL / 2;
+    int meio = H_LIN / 2;
+    for(int i=0; i<H_LIN; i++) {
+        for(int j=0; j<H_COL; j++) {
+            // Distância Manhattan do centro
+            int dist = abs(i - meio) + abs(j - centro);
+            // Para formar losango, distância até 2 é área afetada
+            if (dist <= 2) {
+                matriz[i][j] = 1;
+            }
+        }
+    }
+}
+
+// Exibe o tabuleiro (água=0, navio=3, área habilidade=5)
+void exibir_tabuleiro(int tabuleiro[TAM][TAM]) {
+    char colunas[TAM] = {'A','B','C','D','E','F','G','H','I','J'};
+
+    printf("    ");
+    for(int c=0; c<TAM; c++) {
+        printf("%c ", colunas[c]);
+    }
+    printf("\n");
+
+    for(int i=0; i<TAM; i++) {
+        printf("%2d |", i+1);
+        for(int j=0; j<TAM; j++) {
+            if(tabuleiro[i][j] == AGUA)
+                printf(" 0");
+            else if(tabuleiro[i][j] == NAVIO)
+                printf(" 3");
+            else if(tabuleiro[i][j] == HABILIDADE)
+                printf(" 5");
+            else
+                printf(" %d", tabuleiro[i][j]); // Caso especial
+        }
+        printf("\n");
+    }
+}
+
+// Exibe matriz de habilidade (0 e 1)
+void exibir_matriz_habilidade(int matriz[H_LIN][H_COL]) {
+    for(int i=0; i<H_LIN; i++) {
+        for(int j=0; j<H_COL; j++) {
+            printf("%d ", matriz[i][j]);
+        }
+        printf("\n");
+    }
+    printf("\n");
+}
+
+// Sobrepõe a matriz de habilidade no tabuleiro
+void sobrepor_habilidade(int tabuleiro[TAM][TAM], int matriz[H_LIN][H_COL], int origem_linha, int origem_coluna) {
+    int meio_l = H_LIN / 2;
+    int meio_c = H_COL / 2;
+
+    for(int i=0; i<H_LIN; i++) {
+        for(int j=0; j<H_COL; j++) {
+            int linha_tab = origem_linha - meio_l + i;
+            int col_tab = origem_coluna - meio_c + j;
+
+            // Verifica se está dentro dos limites do tabuleiro
+            if(linha_tab >=0 && linha_tab < TAM && col_tab >=0 && col_tab < TAM) {
+                // Se a posição da habilidade for 1, marca a área no tabuleiro
+                if(matriz[i][j] == 1) {
+                    // Se não for navio, marca como área de habilidade
+                    if(tabuleiro[linha_tab][col_tab] == AGUA)
+                        tabuleiro[linha_tab][col_tab] = HABILIDADE;
+                }
+            }
+        }
+    }
+}
+
+// Verifica se é possível posicionar o navio (mesmo que seu código original)
+int pode_posicionar(int tabuleiro[TAM][TAM], int linha, int coluna, int dx, int dy) {
+    for(int i=0; i<TAM_NAVIO; i++) {
+        int x = linha + i*dx;
+        int y = coluna + i*dy;
+        if(x<0 || x>=TAM || y<0 || y>=TAM) return 0;
+        if(tabuleiro[x][y] != AGUA) return 0;
+    }
+    return 1;
+}
+
+// Posiciona o navio no tabuleiro
+void posiciona_navio(int tabuleiro[TAM][TAM], int linha, int coluna, int dx, int dy) {
+    for(int i=0; i<TAM_NAVIO; i++) {
+        tabuleiro[linha + i*dx][coluna + i*dy] = NAVIO;
+    }
+}
